@@ -1,0 +1,69 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+from ast import literal_eval
+from sklearn.metrics.pairwise import linear_kernel,cosine_similarity
+
+!pip install nltk
+
+import nltk
+nltk.download('stopwords')
+nltk.download('wordnet')
+
+
+import nltk 
+from sklearn.feature_extraction.text import TfidfVectorizer,CountVectorizer
+from nltk.stem.snowball import SnowballStemmer
+from nltk.stem.wordnet import WordNetLemmatizer
+from nltk.corpus import wordnet, stopwords
+import string 
+from requests import get
+
+#Library for Collaborative filtering
+!pip install surprise
+from surprise import Reader,Dataset,SVD,evaluate
+import warnings;warnings.simplefilter('ignore')
+%matplotlib inline
+
+nltk.download('stopwords')
+nltk.download('wordnet')
+
+movies_metadata=pd.read_csv('movies_metadata.csv',error_bad_lines=False)
+movies_metadata.head()
+
+movies_metadata.columns
+
+movies_metadata.info()
+
+fig,ax=plt.subplots()
+fig.set_size_inches(12,9)
+sns.heatmap(movies_metadata.isnull(),yticklabels=False,cmap='viridis',ax=ax)
+
+#From the graph we can easily visualize how much daa is missing for our dataset ,We have lots of data is missing in tagline ,belongs to collection
+
+#Reading the movie from our small movies data set
+movies_small=pd.read_csv('movies.csv')
+movies_small.head()
+
+movies_small.info()
+
+#Cheking null values in dataset
+movies_small.isnull().sum()
+
+# Creating a plot for Genre Distribution
+df1 = movies_small['genres'].apply(lambda genrelist : str(genrelist).split("|"))
+df1 = pd.Series(df1).apply(frozenset).to_frame(name='givengenres')
+for givengenres in frozenset.union(*df1.givengenres):
+    df1[givengenres] = df1.apply(lambda _: int(givengenres in _.givengenres), axis=1)
+df1.drop('givengenres',axis=1,inplace=True)
+df1['movieId']=movies_small['movieId']
+df1 = pd.merge(movies_small,df1,on='movieId')
+df1.head()
+genre_columns= ['Film-Noir',
+       'Romance', 'Western', 'Documentary', 'Thriller', 'Action', 'Musical',
+       'War', 'Drama', 'IMAX', 'Crime', 'Children', 'Adventure', 'Horror',
+       'Fantasy', 'Animation', 'Comedy', 'Mystery', '(no genres listed)',
+       'Sci-Fi']
+df1[genre_columns].sum().sort_values(ascending=False).plot(kind='bar',figsize=(12,9))
